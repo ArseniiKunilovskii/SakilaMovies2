@@ -8,37 +8,36 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 public class DataManager {
-    private DataSource dataSource;
+    private static DataSource dataSource;
 
-    public DataManager(DataSource dataSource){
+    public DataManager(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
-    public static void displayActorsByLastName(BasicDataSource dataSource, String lastname) {
+    public static void displayActorsByLastName(String lastName) {
+        String actorsQuery = "SELECT first_name, last_name FROM actor WHERE last_name = ?";
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("""
-                     Select first_name, last_name from actor
-                     where last_name = ?""")) {
-            statement.setString(1, lastname);
-            try (ResultSet results = statement.executeQuery()) {
-                if (!results.next()) {
-                    System.out.println("There is no actor with the last name " + lastname);
-                    return;
+             PreparedStatement statement = connection.prepareStatement(actorsQuery)) {
+            statement.setString(1, lastName);
+            try (ResultSet actorsResult = statement.executeQuery()) {
+                if (actorsResult.next()) {
+                    System.out.println("Your matches are: \n");
+                    do {
+                        String firstName = actorsResult.getString("first_name");
+                        lastName = actorsResult.getString("last_name");
+                        System.out.println(firstName + " " + lastName);
+                    } while (actorsResult.next());
+
+                } else {
+                    System.out.println("No matches!");
                 }
-                String firstName;
-                String lastName;
-                do {
-                    firstName = results.getString(1);
-                    lastName = results.getString(2);
-                    System.out.println(firstName + " " + lastName);
-                } while (results.next());
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static void displayMoviesByFullName(BasicDataSource dataSource, String firstName, String lastName) {
+    public static void displayMoviesByFullName(String firstName, String lastName) {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(""" 
                      SELECT f.title FROM sakila.film f
@@ -53,7 +52,7 @@ public class DataManager {
                     return;
                 }
                 String title;
-                System.out.println("Here is the list of movies with " + firstName + " " + lastName+ "-----------------");
+                System.out.println("Here is the list of movies with " + firstName + " " + lastName + "-----------------");
                 do {
                     title = results.getString(1);
                     System.out.println(title);
